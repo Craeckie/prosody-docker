@@ -3,7 +3,7 @@
 # Based on ubuntu
 ################################################################################
 
-FROM ubuntu:14.04
+FROM ubuntu:xenial
 
 MAINTAINER Lloyd Watkin <lloyd@evilprofessor.co.uk>
 
@@ -20,20 +20,36 @@ RUN apt-get update \
         lua-dbi-sqlite3 \
         lua-event \
         lua-expat \
-        lua-filesystem \
         lua-sec \
         lua-socket \
         lua-zlib \
+        lua-filesystem \
+        lua-dbi-mysql \
+        lua-dbi-postgresql \
+        lua-dbi-sqlite3 \
+        lua-bitop \
         lua5.1 \
+        wget \
         openssl \
         ca-certificates \
         ssl-cert \
     && rm -rf /var/lib/apt/lists/*
+#        libidn11 \
+#        liblua5.1-expat0 \
+#        libssl1.0.0 \
+#        lua5.1 \
+
+# Install prosody
+RUN echo deb http://packages.prosody.im/debian xenial main | tee -a /etc/apt/sources.list \
+    && wget https://prosody.im/files/prosody-debian-packages.key -O- | apt-key add - \
+    && apt-get update && apt-get install -y prosody \
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /var/run/prosody && chown prosody /var/run/prosody
 
 # Install and configure prosody
-COPY ./prosody.deb /tmp/prosody.deb
-RUN dpkg -i /tmp/prosody.deb \
-    && sed -i '1s/^/daemonize = false;\n/' /etc/prosody/prosody.cfg.lua \
+#COPY ./prosody.deb /tmp/prosody.deb
+#RUN dpkg -i /tmp/prosody.deb \
+RUN sed -i '1s/^/daemonize = false;\n/' /etc/prosody/prosody.cfg.lua \
     && perl -i -pe 'BEGIN{undef $/;} s/^log = {.*?^}$/log = {\n    {levels = {min = "info"}, to = "console"};\n}/smg' /etc/prosody/prosody.cfg.lua
 
 COPY ./entrypoint.sh /entrypoint.sh
